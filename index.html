@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food and Nutrition CRUD Operations</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input, button {
+            margin: 5px 0;
+            padding: 10px;
+        }
+        .food-item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .feedback {
+            color: green;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Food and Nutrition CRUD Operations</h1>
+
+    <div id="feedback" class="feedback"></div>
+
+    <form id="create-form">
+        <h3>Create Food Item</h3>
+        <input type="text" id="name" placeholder="Name" required>
+        <input type="number" id="calories" placeholder="Calories" required>
+        <input type="number" id="protein" placeholder="Protein (g)" required>
+        <input type="number" id="fat" placeholder="Fat (g)" required>
+        <input type="number" id="carbohydrates" placeholder="Carbohydrates (g)" required>
+        <input type="text" id="servingSize" placeholder="Serving Size" required>
+        <button type="submit">Create</button>
+    </form>
+
+    <h3>All Food Items</h3>
+    <div id="food-list"></div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/foods';
+
+        async function fetchFoods() {
+            try {
+                const response = await fetch(API_URL);
+                const foods = await response.json();
+                const foodList = document.getElementById('food-list');
+                foodList.innerHTML = '';
+
+                foods.forEach(food => {
+                    const foodDiv = document.createElement('div');
+                    foodDiv.className = 'food-item';
+                    foodDiv.innerHTML = `
+                        <strong>${food.name}</strong><br>
+                        Calories: ${food.calories} kcal<br>
+                        Protein: ${food.protein} g<br>
+                        Fat: ${food.fat} g<br>
+                        Carbohydrates: ${food.carbohydrates} g<br>
+                        Serving Size: ${food.servingSize}<br>
+                        <button onclick="deleteFood('${food._id}')">Delete</button>
+                        <button onclick="updateFood('${food._id}')">Update</button>
+                    `;
+                    foodList.appendChild(foodDiv);
+                });
+            } catch (error) {
+                displayFeedback('Error fetching food items: ' + error.message);
+            }
+        }
+
+        document.getElementById('create-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const calories = document.getElementById('calories').value;
+            const protein = document.getElementById('protein').value;
+            const fat = document.getElementById('fat').value;
+            const carbohydrates = document.getElementById('carbohydrates').value;
+            const servingSize = document.getElementById('servingSize').value;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name, calories, protein, fat, carbohydrates, servingSize }),
+                });
+
+                if (response.ok) {
+                    displayFeedback('Food item created successfully!');
+                    fetchFoods();  // Refresh the list
+                } else {
+                    const errorData = await response.json();
+                    displayFeedback('Error creating food item: ' + errorData.error);
+                }
+            } catch (error) {
+                displayFeedback('Error creating food item: ' + error.message);
+            }
+        });
+
+        async function deleteFood(id) {
+            try {
+                const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    displayFeedback('Food item deleted successfully!');
+                    fetchFoods();  // Refresh the list
+                } else {
+                    const errorData = await response.json();
+                    displayFeedback('Error deleting food item: ' + errorData.error);
+                }
+            } catch (error) {
+                displayFeedback('Error deleting food item: ' + error.message);
+            }
+        }
+
+        async function updateFood(id) {
+            const name = prompt('Enter new name:');
+            const calories = prompt('Enter new calories:');
+            const protein = prompt('Enter new protein (g):');
+            const fat = prompt('Enter new fat (g):');
+            const carbohydrates = prompt('Enter new carbohydrates (g):');
+            const servingSize = prompt('Enter new serving size:');
+
+            try {
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name, calories, protein, fat, carbohydrates, servingSize }),
+                });
+
+                if (response.ok) {
+                    displayFeedback('Food item updated successfully!');
+                    fetchFoods();  // Refresh the list
+                } else {
+                    const errorData = await response.json();
+                    displayFeedback('Error updating food item: ' + errorData.error);
+                }
+            } catch (error) {
+                displayFeedback('Error updating food item: ' + error.message);
+            }
+        }
+
+        function displayFeedback(message) {
+            const feedback = document.getElementById('feedback');
+            feedback.innerText = message;
+        }
+
+        fetchFoods();  // Initial load
+    </script>
+
+</body>
+</html>
